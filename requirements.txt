@@ -1,0 +1,7 @@
+# Add your Python dependencies here
+requests
+python-dotenv
+qdrant-client
+tqdm
+psycopg2-binary
+python-dateutil
