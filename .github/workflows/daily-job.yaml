@@ -8,7 +8,7 @@ on:
 
 jobs:
   run-upload-events:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     services:
       postgres:
@@ -48,6 +48,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Print env vars
+        run: env | grep POSTGRES
+
+      - name: Wait for Postgres to be ready
+        run: |
+          for i in {1..10}; do
+            pg_isready -h localhost -p 5432 && break
+            echo "Waiting for Postgres..."
+            sleep 3
+          done
 
       - name: Run upload events script
         run: python run_upload_events.py
