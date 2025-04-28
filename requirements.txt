@@ -5,3 +5,4 @@ qdrant-client
 tqdm
 psycopg2-binary
 python-dateutil
+fastembed
