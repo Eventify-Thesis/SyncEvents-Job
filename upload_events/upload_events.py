@@ -172,10 +172,10 @@ def main():
         # ✅ Calculate soonest start_time
         start_times = showtime_data.get(event_id, [])
         soonest_time = min(start_times) if start_times else None
-        soonest_time_str = soonest_time.strftime("%Y-%m-%d %H:%M:%S") if soonest_time else None
+        soonest_time_float = soonest_time.timestamp() if soonest_time else None
         
         i+=1  
-        print(i, start_times, soonest_time_str)
+        print(i, start_times, soonest_time_float)
         print(i, lowest_price)
 
         documents.append(text)
@@ -190,7 +190,7 @@ def main():
             "categories": [cat.lower() for cat in row.get("categories", [])],
             "event_logo_url": row.get("event_logo_url"),
             "lowest_price": lowest_price,
-            "soonest_start_time": soonest_time_str
+            "soonest_start_time": soonest_time_float
         })
         ids.append(event_id)
 
