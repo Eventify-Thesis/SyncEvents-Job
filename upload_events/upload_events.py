@@ -145,6 +145,18 @@ def main():
     metadata = []
     ids = []
 
+    def snake_to_camel(s):
+        parts = s.split('_')
+        return parts[0] + ''.join(word.capitalize() for word in parts[1:])
+
+    def dict_keys_to_camel_case(d):
+        if isinstance(d, dict):
+            return {snake_to_camel(k): dict_keys_to_camel_case(v) for k, v in d.items()}
+        elif isinstance(d, list):
+            return [dict_keys_to_camel_case(i) for i in d]
+        else:
+            return d
+
     i = 0
     for row in rows:
         event_id = row["id"]
@@ -162,14 +174,14 @@ def main():
         description = row.get("event_description") or ""
         text = f"{row['event_name']} - {description}. Located at {location_str}. Categories: {categories_str}"
 
-        # ✅ Calculate lowest price
+        # Calculate lowest price
         tickets = ticket_data.get(event_id, [])
         has_free_ticket = any(t["is_free"] for t in tickets)
         lowest_price = 0 if has_free_ticket else (
             min((t["price"] for t in tickets if t["price"] is not None), default=None)
         )
 
-        # ✅ Calculate soonest start_time
+        # Calculate soonest start_time
         start_times = showtime_data.get(event_id, [])
         soonest_time = min(start_times) if start_times else None
         soonest_time_float = soonest_time.timestamp() if soonest_time else None
@@ -179,19 +191,21 @@ def main():
         print(i, lowest_price)
 
         documents.append(text)
-        metadata.append({
+        meta = {
             "id": event_id,
             "eventName": row["event_name"],
-            "event_description": row.get("event_description", ""),
+            "eventDescription": row.get("event_description", ""),
             "city": (row.get("city_name_en") or row.get("city_name") or "").lower(),
             "district": row.get("district_name_en") or row.get("district_name"),
             "ward": row.get("ward_name_en") or row.get("ward_name"),
             "street": row.get("street"),
             "categories": [cat.lower() for cat in row.get("categories", [])],
-            "event_logo_url": row.get("event_logo_url"),
-            "lowest_price": lowest_price,
-            "soonest_start_time": soonest_time_float
-        })
+            "eventLogoUrl": row.get("event_logo_url"),
+            "minimumPrice": lowest_price,
+            "startTime": soonest_time_float
+        }
+        meta_camel = dict_keys_to_camel_case(meta)
+        metadata.append(meta_camel)
         ids.append(event_id)
 
     # Upsert events
