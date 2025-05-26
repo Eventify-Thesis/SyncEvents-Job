@@ -19,8 +19,7 @@ def main():
         url=os.getenv("QDRANT_URL"),
         api_key=os.getenv("QDRANT_API_KEY")
     )
-    client.set_model("sentence-transformers/all-MiniLM-L6-v2")
-    client.set_sparse_model("prithivida/Splade_PP_en_v1")
+    client.set_model("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
     collection_name = "events"
 
     # def load_last_sync_time_qdrant():
@@ -123,6 +122,27 @@ def main():
             sparse_vectors_config=client.get_fastembed_sparse_vector_params(),
         )
 
+    # ✅ Ensure payload indexes exist (for optimized search filters and BM25)
+    try:
+        index_fields = [
+            ("categories", "keyword"),
+            ("city", "keyword"),
+            ("startTime", "float"),
+            ("text", "text")  # ✅ For BM25 search support
+        ]
+        for field_name, schema in index_fields:
+            try:
+                client.create_payload_index(
+                    collection_name=collection_name,
+                    field_name=field_name,
+                    field_schema=schema
+                )
+                print(f"Index created for '{field_name}' ({schema})")
+            except Exception as e:
+                print(f"Index for '{field_name}' might already exist or failed: {e}")
+    except Exception as e:
+        print(f"Failed to create payload indexes: {e}")
+
     # Fetch existing IDs in Qdrant
     existing_qdrant_ids = set()
     scroll = client.scroll(collection_name=collection_name, limit=1000)
@@ -185,8 +205,8 @@ def main():
         start_times = showtime_data.get(event_id, [])
         soonest_time = min(start_times) if start_times else None
         soonest_time_float = soonest_time.timestamp() if soonest_time else None
-        
-        i+=1  
+
+        i += 1
         print(i, start_times, soonest_time_float)
         print(i, lowest_price)
 
@@ -202,7 +222,8 @@ def main():
             "categories": [cat.lower() for cat in row.get("categories", [])],
             "eventLogoUrl": row.get("event_logo_url"),
             "minimumPrice": lowest_price,
-            "startTime": soonest_time_float
+            "startTime": soonest_time_float,
+            "text": text  # ✅ For BM25 search
         }
         meta_camel = dict_keys_to_camel_case(meta)
         metadata.append(meta_camel)
@@ -217,9 +238,6 @@ def main():
             ids=tqdm(ids),
         )
         print(f"Upserted {len(documents)} events into Qdrant.")
-
-    # # Save sync time
-    # save_sync_time_qdrant()
 
 if __name__ == "__main__":
     main()
