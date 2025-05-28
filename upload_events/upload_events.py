@@ -72,6 +72,10 @@ def main():
             e.categories,
             e.updated_at,
             e.event_logo_url,
+            e.latitude,
+            e.longitude,
+            e.formatted_address,
+            e.place_id,
             c.name AS city_name,
             c.name_en AS city_name_en,
             d.name AS district_name,
@@ -128,7 +132,8 @@ def main():
             ("categories", "keyword"),
             ("city", "keyword"),
             ("startTime", "float"),
-            ("text", "text")  # ✅ For BM25 search support
+            ("text", "text"),  # ✅ For BM25 search support
+            ("location", "geo")  # ✅ For efficient geo bounding box queries
         ]
         for field_name, schema in index_fields:
             try:
@@ -223,7 +228,13 @@ def main():
             "eventLogoUrl": row.get("event_logo_url"),
             "minimumPrice": lowest_price,
             "startTime": soonest_time_float,
-            "text": text  # ✅ For BM25 search
+            "text": text,
+            "location": {
+                "lat": row.get("latitude"),
+                "lon": row.get("longitude"),
+            },
+            "formattedAddress": row.get("formatted_address"),
+            "placeId": row.get("place_id"),
         }
         meta_camel = dict_keys_to_camel_case(meta)
         metadata.append(meta_camel)
