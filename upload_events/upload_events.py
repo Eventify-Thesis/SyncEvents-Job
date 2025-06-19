@@ -54,11 +54,11 @@ def main():
 
     # PostgreSQL connection
     conn = psycopg2.connect(
-        host=os.getenv("POSTGRES_HOST"),
-        port=os.getenv("POSTGRES_PORT"),
-        user=os.getenv("POSTGRES_USER"),
-        password=os.getenv("POSTGRES_PASSWORD"),
-        dbname=os.getenv("POSTGRES_DB")
+        host=os.getenv("DATABASE_HOST"),
+        port=os.getenv("DATABASE_PORT"),
+        user=os.getenv("DATABASE_USERNAME"),
+        password=os.getenv("DATABASE_PASSWORD"),
+        dbname=os.getenv("DATABASE_NAME")
     )
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -129,6 +129,7 @@ def main():
     # ✅ Ensure payload indexes exist (for optimized search filters and BM25)
     try:
         index_fields = [
+            ("id", "integer"),  # ✅ For get_event_by_id filtering
             ("categories", "keyword"),
             ("city", "keyword"),
             ("startTime", "float"),
